@@ -28,13 +28,13 @@
 ### Using npx (Recommended)
 
 ```bash
-npx gemini-image-mcp --gemini-api-key "your-api-key"
+npx @ikamman/gemini-image-mcp --gemini-api-key "your-api-key"
 ```
 
 ### Global Installation
 
 ```bash
-npm install -g gemini-image-mcp
+npm install -g @ikamman/gemini-image-mcp
 gemini-image-mcp --help
 ```
 
@@ -49,7 +49,7 @@ gemini-image-mcp --help
 ### Option 1: Install via npm
 
 ```bash
-npm install -g gemini-image-mcp
+npm install -g @ikamman/gemini-image-mcp
 ```
 
 ### Option 2: Build from Source
@@ -91,13 +91,56 @@ gemini-image-mcp
 
 ### Integration with Claude Desktop
 
+#### Using npx (No Installation Required)
+
 Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "gemini-image-mcp": {
+      "command": "npx",
+      "args": ["@ikamman/gemini-image-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+#### Using Global Installation
+
+First install globally:
+```bash
+npm install -g @ikamman/gemini-image-mcp
+```
+
+Then add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "gemini-image-mcp": {
       "command": "gemini-image-mcp",
+      "env": {
+        "GEMINI_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+#### Alternative: Using Full Path
+
+For more reliability, you can use the full npx path:
+
+```json
+{
+  "mcpServers": {
+    "gemini-image-mcp": {
+      "command": "/usr/local/bin/npx",
+      "args": ["@ikamman/gemini-image-mcp"],
       "env": {
         "GEMINI_API_KEY": "your-api-key-here"
       }
