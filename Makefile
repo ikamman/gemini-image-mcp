@@ -167,8 +167,7 @@ release-prep: ci audit
 	@echo "$(GREEN)Release preparation completed!$(NC)"
 	@echo "$(YELLOW)Don't forget to:$(NC)"
 	@echo "  - Update version in Cargo.toml"
-	@echo "  - Update CHANGELOG.md"
-	@echo "  - Create git tag"
+	@echo "  - Create and push git tag (cargo-dist will handle the rest)"
 
 ## Show project info
 info:

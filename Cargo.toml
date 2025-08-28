@@ -1,6 +1,6 @@
 [package]
 name = "gemini-image-mcp"
-version = "1.0.8"
+version = "1.0.9"
 edition = "2024"
 repository = "https://github.com/ikamman/gemini-image-mcp.git"
 description = "MCP server for image analysis and generation using Google's Gemini API"
@@ -10,6 +10,20 @@ authors = ["Kamil Manka <kamil.manka@gmail.com>"]
 
 [package.metadata.dist]
 npm-package = "gemini-image-mcp"
+
+[workspace.metadata.dist]
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.29.0"
+# CI backends to support
+ci = ["github"]
+# The installers to generate for each app
+installers = ["npm"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Publishing configuration
+publish-jobs = ["npm"]
+# NPM configuration
+npm-scope = "@ikamman"
 
 [dependencies]
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk.git", features = [

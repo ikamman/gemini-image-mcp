@@ -53,18 +53,9 @@ jobs:
         cargo install cargo-audit || true
         make audit
 
-    - name: Test NPM package setup
-      run: |
-        npm install
-        npm run postinstall
-
-  test-matrix:
-    name: Test Matrix
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        rust: [stable]
+  test:
+    name: Test
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
@@ -72,8 +63,6 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: ${{ matrix.rust }}
 
     - name: Cache cargo registry
       uses: actions/cache@v4
@@ -82,34 +71,16 @@ jobs:
           ~/.cargo/registry
           ~/.cargo/git
           target
-        key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ${{ runner.os }}-${{ matrix.rust }}-cargo-
+          ${{ runner.os }}-cargo-
 
-    - name: Install Make (Unix)
-      if: runner.os != 'Windows'
+    - name: Install Make
       run: |
         if ! command -v make &> /dev/null; then
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            sudo apt-get update
-            sudo apt-get install -y make
-          elif [[ "${{ runner.os }}" == "macOS" ]]; then
-            brew install make
-          fi
+          sudo apt-get update
+          sudo apt-get install -y make
         fi
 
-    - name: Run tests (Unix)
-      if: runner.os != 'Windows'
+    - name: Run tests
       run: make test
-
-    - name: Run tests (Windows)
-      if: runner.os == 'Windows'
-      run: cargo test
-
-    - name: Build release (Unix)
-      if: runner.os != 'Windows'
-      run: make build-release
-
-    - name: Build release (Windows)
-      if: runner.os == 'Windows'
-      run: cargo build --release

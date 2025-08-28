@@ -46,7 +46,7 @@ gemini-image-mcp --help
 - **Node.js**: 14+ (for npm installation)
 - **Rust**: 1.70+ (for building from source)
 
-### Option 1: Install via npm
+### Option 1: Install via npm (Automated with cargo-dist)
 
 ```bash
 npm install -g @ikamman/gemini-image-mcp
@@ -55,7 +55,7 @@ npm install -g @ikamman/gemini-image-mcp
 ### Option 2: Build from Source
 
 ```bash
-git clone https://github.com/your-username/gemini-image-mcp.git
+git clone https://github.com/ikamman/gemini-image-mcp.git
 cd gemini-image-mcp
 cargo build --release
 ```
@@ -307,9 +307,8 @@ gemini-image-mcp/
 │   ├── validation.rs       # Input validation
 │   └── error.rs            # Error handling
 ├── test/                   # Sample images for testing
-├── Cargo.toml              # Rust dependencies
-├── package.json            # npm package configuration
-└── bin/                    # CLI wrapper scripts
+├── Cargo.toml              # Rust dependencies & cargo-dist config
+└── .github/workflows/      # Automated CI/CD with cargo-dist
 ```
 
 ## 🤝 Contributing
@@ -341,9 +340,8 @@ export GEMINI_API_KEY="your-api-key-here"
 - Verify the image format is supported
 
 **❌ "Binary not found" after npm install**
-```bash
-npm run build
-```
+- Try reinstalling: `npm uninstall -g @ikamman/gemini-image-mcp && npm install -g @ikamman/gemini-image-mcp`
+- The binary is automatically managed by cargo-dist
 
 **❌ Rate limit errors**
 - Wait a moment before retrying
@@ -351,9 +349,9 @@ npm run build
 
 ### Getting Help
 
-- 📚 [Documentation](https://github.com/your-username/gemini-image-mcp/wiki)
-- 🐛 [Report Issues](https://github.com/your-username/gemini-image-mcp/issues)
-- 💬 [Discussions](https://github.com/your-username/gemini-image-mcp/discussions)
+- 📚 [Documentation](https://github.com/ikamman/gemini-image-mcp/wiki)
+- 🐛 [Report Issues](https://github.com/ikamman/gemini-image-mcp/issues)
+- 💬 [Discussions](https://github.com/ikamman/gemini-image-mcp/discussions)
 
 ## 🙏 Acknowledgments
 
@@ -367,6 +365,6 @@ npm run build
 
 **Made with ❤️ using Rust and Google Gemini**
 
-[⭐ Star this repo](https://github.com/your-username/gemini-image-mcp) • [🐛 Report Bug](https://github.com/your-username/gemini-image-mcp/issues) • [✨ Request Feature](https://github.com/your-username/gemini-image-mcp/issues)
+[⭐ Star this repo](https://github.com/ikamman/gemini-image-mcp) • [🐛 Report Bug](https://github.com/ikamman/gemini-image-mcp/issues) • [✨ Request Feature](https://github.com/ikamman/gemini-image-mcp/issues)
 
 </div>
