@@ -2,6 +2,11 @@
 name = "gemini-image-mcp"
 version = "1.0.4"
 edition = "2024"
+repository = "https://github.com/ikamman/gemini-image-mcp.git"
+description = "MCP server for image analysis and generation using Google's Gemini API"
+homepage = "https://github.com/ikamman/gemini-image-mcp#readme"
+license = "MIT"
+authors = ["Kamil Manka <kamil.manka@gmail.com>"]
 
 [dependencies]
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk.git", features = [
@@ -26,3 +31,8 @@ dotenvy = "0.15"
 [dev-dependencies]
 tempfile = "3.8"
 tokio-test = "0.4"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
