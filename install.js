@@ -43,6 +43,10 @@ function findBinary() {
 function createWrapper() {
   try {
     const binaryPath = findBinary();
+    
+    // Ensure the binary has execute permissions
+    fs.chmodSync(binaryPath, '755');
+    
     const wrapperPath = path.join(__dirname, 'bin', 'gemini-image-mcp.js');
     
     const wrapperContent = `#!/usr/bin/env node
@@ -88,6 +92,14 @@ function findBinary() {
 
 try {
   const binaryPath = findBinary();
+  
+  // Ensure binary has execute permissions
+  try {
+    fs.chmodSync(binaryPath, '755');
+  } catch (chmodErr) {
+    // Ignore permission errors, binary might already have correct permissions
+  }
+  
   const child = spawn(binaryPath, process.argv.slice(2), { 
     stdio: 'inherit',
     shell: false
