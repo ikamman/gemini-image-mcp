@@ -8,24 +8,24 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
-  test:
+  ci:
+    name: CI Pipeline
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Rust
-      uses: actions-rs/toolchain@v1
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
         components: rustfmt, clippy
 
-    - name: Cache Rust dependencies
-      uses: actions/cache@v3
+    - name: Cache cargo registry
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
@@ -35,19 +35,79 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-
 
-    - name: Check formatting
-      run: cargo fmt -- --check
+    - name: Install Make (if not available)
+      run: |
+        if ! command -v make &> /dev/null; then
+          sudo apt-get update
+          sudo apt-get install -y make
+        fi
 
-    - name: Run Clippy
-      run: cargo clippy -- -D warnings
+    - name: Show Makefile help
+      run: make help
 
-    - name: Run tests
-      run: cargo test
+    - name: Run CI pipeline
+      run: make ci
 
-    - name: Build release
-      run: cargo build --release
+    - name: Run security audit
+      run: |
+        cargo install cargo-audit || true
+        make audit
 
     - name: Test NPM package setup
       run: |
         npm install
         npm run postinstall
+
+  test-matrix:
+    name: Test Matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@${{ matrix.rust }}
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.rust }}-cargo-
+
+    - name: Install Make (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        if ! command -v make &> /dev/null; then
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install -y make
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            brew install make
+          fi
+        fi
+
+    - name: Run tests (Unix)
+      if: runner.os != 'Windows'
+      run: make test
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      run: cargo test
+
+    - name: Build release (Unix)
+      if: runner.os != 'Windows'
+      run: make build-release
+
+    - name: Build release (Windows)
+      if: runner.os == 'Windows'
+      run: cargo build --release

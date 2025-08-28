@@ -125,25 +125,26 @@ impl JsonRpcHandler {
 
     async fn handle_tools_call(&self, request: JsonRpcRequest) -> JsonRpcResponse {
         if let Some(params) = request.params
-            && let Ok(tool_call) = serde_json::from_value::<Value>(params) {
-                if let Some(name) = tool_call.get("name").and_then(|v| v.as_str()) {
-                    if name == "analyze_image" {
-                        return self.handle_analyze_image(request.id, tool_call).await;
-                    } else if name == "generate_image" {
-                        return self.handle_generate_image(request.id, tool_call).await;
-                    } else if name == "edit_image" {
-                        return self.handle_edit_image(request.id, tool_call).await;
-                    } else {
-                        return JsonRpcResponse {
-                            jsonrpc: "2.0".to_string(),
-                            id: request.id,
-                            result: None,
-                            error: Some(JsonRpcError {
-                                code: -1,
-                                message: format!("Unknown tool: {}", name),
-                            }),
-                        };
-                    }
+            && let Ok(tool_call) = serde_json::from_value::<Value>(params)
+        {
+            if let Some(name) = tool_call.get("name").and_then(|v| v.as_str()) {
+                if name == "analyze_image" {
+                    return self.handle_analyze_image(request.id, tool_call).await;
+                } else if name == "generate_image" {
+                    return self.handle_generate_image(request.id, tool_call).await;
+                } else if name == "edit_image" {
+                    return self.handle_edit_image(request.id, tool_call).await;
+                } else {
+                    return JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: None,
+                        error: Some(JsonRpcError {
+                            code: -1,
+                            message: format!("Unknown tool: {}", name),
+                        }),
+                    };
+                }
             } else {
                 return JsonRpcResponse {
                     jsonrpc: "2.0".to_string(),
