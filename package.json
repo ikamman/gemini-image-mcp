@@ -1,6 +1,6 @@
 {
   "name": "@ikamman/gemini-image-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MCP server for image analysis and generation using Google's Gemini API",
   "main": "index.js",
   "bin": {
