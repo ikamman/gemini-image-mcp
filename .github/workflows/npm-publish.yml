@@ -70,6 +70,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -96,17 +104,20 @@ jobs:
         mkdir -p target/release
         cp artifacts/binary-x86_64-unknown-linux-gnu/* target/release/
 
-    - name: Update package version (for workflow_dispatch)
+    - name: Bump version and commit (for workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
       run: |
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         if [ "$CURRENT_VERSION" != "${{ github.event.inputs.version }}" ]; then
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          git add package.json
+          git commit -m "Bump version to ${{ github.event.inputs.version }}"
+          git push
         else
           echo "Version already set to ${{ github.event.inputs.version }}, skipping update"
         fi
 
-    - name: Update package version (for release)
+    - name: Bump version and commit (for release)
       if: github.event_name == 'release'
       run: |
         # Extract version from release tag (remove 'v' prefix if present)
@@ -115,6 +126,9 @@ jobs:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         if [ "$CURRENT_VERSION" != "$VERSION" ]; then
           npm version $VERSION --no-git-tag-version
+          git add package.json
+          git commit -m "Bump version to $VERSION"
+          git push
         else
           echo "Version already set to $VERSION, skipping update"
         fi
