@@ -10,3 +10,5 @@ CLAUDE.md
 /test/cool_*.png
 /test/generated*.png
 /test/edited*.png
+
+node_modules/
