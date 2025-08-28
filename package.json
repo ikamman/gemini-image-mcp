@@ -1,0 +1,47 @@
+{
+  "name": "gemini-image-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for image analysis and generation using Google's Gemini API",
+  "main": "index.js",
+  "bin": {
+    "gemini-image-mcp": "./bin/gemini-image-mcp.js"
+  },
+  "scripts": {
+    "build": "cargo build --release",
+    "build:all": "npm run build:linux && npm run build:macos && npm run build:windows",
+    "build:linux": "cargo build --release --target x86_64-unknown-linux-gnu",
+    "build:macos": "cargo build --release --target x86_64-apple-darwin",
+    "build:windows": "cargo build --release --target x86_64-pc-windows-gnu",
+    "postinstall": "node install.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "bin/",
+    "install.js",
+    "target/release/gemini-image-mcp*",
+    "target/x86_64-unknown-linux-gnu/release/gemini-image-mcp*",
+    "target/x86_64-apple-darwin/release/gemini-image-mcp*",
+    "target/x86_64-pc-windows-gnu/release/gemini-image-mcp*"
+  ],
+  "keywords": [
+    "mcp",
+    "gemini",
+    "image",
+    "ai",
+    "analysis",
+    "generation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ]
+}

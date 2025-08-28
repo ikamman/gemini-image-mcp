@@ -1,0 +1,12 @@
+src/
+Cargo.toml
+Cargo.lock
+.git/
+.gitignore
+target/debug/
+*.rs
+!target/release/
+!target/*/release/
+test/
+.vscode/
+.idea/

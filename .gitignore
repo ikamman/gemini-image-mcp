@@ -1,0 +1,12 @@
+/target
+.env
+CLAUDE.md
+.claude/
+
+# Generated test images (keep sample images but ignore generated ones)
+/test/*_cat.png
+/test/test_*.png
+/test/robot_*.png
+/test/cool_*.png
+/test/generated*.png
+/test/edited*.png
