@@ -1,0 +1,136 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+
+    - name: Install cross-compilation dependencies (Linux)
+      if: matrix.target == 'x86_64-pc-windows-gnu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-mingw-w64-x86-64
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ matrix.target }}-
+          ${{ runner.os }}-cargo-
+
+    - name: Build for ${{ matrix.target }}
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --target ${{ matrix.target }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary-${{ matrix.target }}
+        path: |
+          target/${{ matrix.target }}/release/gemini-image-mcp*
+        retention-days: 1
+
+  publish:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Organize binaries
+      run: |
+        mkdir -p target/x86_64-unknown-linux-gnu/release
+        mkdir -p target/x86_64-apple-darwin/release
+        mkdir -p target/x86_64-pc-windows-gnu/release
+        
+        cp artifacts/binary-x86_64-unknown-linux-gnu/* target/x86_64-unknown-linux-gnu/release/
+        cp artifacts/binary-x86_64-apple-darwin/* target/x86_64-apple-darwin/release/
+        cp artifacts/binary-x86_64-pc-windows-gnu/* target/x86_64-pc-windows-gnu/release/
+        
+        # Also copy to default release directory
+        mkdir -p target/release
+        cp artifacts/binary-x86_64-unknown-linux-gnu/* target/release/
+
+    - name: Update package version (for workflow_dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+    - name: Update package version (for release)
+      if: github.event_name == 'release'
+      run: |
+        # Extract version from release tag (remove 'v' prefix if present)
+        VERSION=${GITHUB_REF#refs/tags/}
+        VERSION=${VERSION#v}
+        npm version $VERSION --no-git-tag-version
+
+    - name: Create bin directory and wrapper
+      run: |
+        mkdir -p bin
+        npm run postinstall
+
+    - name: Publish to NPM
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Create GitHub release (for workflow_dispatch)
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        release_name: Release v${{ github.event.inputs.version }}
+        draft: false
+        prerelease: false
