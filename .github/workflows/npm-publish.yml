@@ -99,7 +99,12 @@ jobs:
     - name: Update package version (for workflow_dispatch)
       if: github.event_name == 'workflow_dispatch'
       run: |
-        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        if [ "$CURRENT_VERSION" != "${{ github.event.inputs.version }}" ]; then
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        else
+          echo "Version already set to ${{ github.event.inputs.version }}, skipping update"
+        fi
 
     - name: Update package version (for release)
       if: github.event_name == 'release'
@@ -107,7 +112,12 @@ jobs:
         # Extract version from release tag (remove 'v' prefix if present)
         VERSION=${GITHUB_REF#refs/tags/}
         VERSION=${VERSION#v}
-        npm version $VERSION --no-git-tag-version
+        CURRENT_VERSION=$(node -p "require('./package.json').version")
+        if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+          npm version $VERSION --no-git-tag-version
+        else
+          echo "Version already set to $VERSION, skipping update"
+        fi
 
     - name: Create bin directory and wrapper
       run: |
