@@ -1,7 +1,7 @@
 use crate::error::McpError;
-use crate::gemini_client::{AnalyzeImageInput, GenerateImageInput, EditImageInput, GeminiClient};
+use crate::gemini_client::{AnalyzeImageInput, EditImageInput, GeminiClient, GenerateImageInput};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tracing::{error, info};
 
 #[derive(Debug, Deserialize)]
@@ -47,16 +47,14 @@ pub struct JsonRpcHandler {
 impl JsonRpcHandler {
     pub fn new(api_key: Option<String>) -> Self {
         let gemini_client = match api_key {
-            Some(key) if !key.trim().is_empty() => {
-                match GeminiClient::new(key) {
-                    Ok(client) => Some(client),
-                    Err(e) => {
-                        error!("Failed to create Gemini client: {}", e);
-                        None
-                    }
+            Some(key) if !key.trim().is_empty() => match GeminiClient::new(key) {
+                Ok(client) => Some(client),
+                Err(e) => {
+                    error!("Failed to create Gemini client: {}", e);
+                    None
                 }
             },
-            _ => None
+            _ => None,
         };
 
         Self { gemini_client }
@@ -75,7 +73,7 @@ impl JsonRpcHandler {
                     code: -32601,
                     message: "Method not found".to_string(),
                 }),
-            }
+            },
         }
     }
 
@@ -159,7 +157,7 @@ impl JsonRpcHandler {
                 }
             }
         }
-        
+
         JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id: request.id,
@@ -180,54 +178,52 @@ impl JsonRpcHandler {
                     jsonrpc: "2.0".to_string(),
                     id,
                     result: None,
-                    error: Some(convert_mcp_error_to_jsonrpc(
-                        McpError::ConfigurationError("GEMINI_API_KEY environment variable not set".to_string())
-                    )),
+                    error: Some(convert_mcp_error_to_jsonrpc(McpError::ConfigurationError(
+                        "GEMINI_API_KEY environment variable not set".to_string(),
+                    ))),
                 };
             }
         };
 
         if let Some(arguments) = tool_call.get("arguments") {
             match serde_json::from_value::<AnalyzeImageInput>(arguments.clone()) {
-                Ok(input) => {
-                    match client.analyze_image(&input).await {
-                        Ok(analysis) => {
-                            info!("Successfully analyzed image: {}", input.image_source);
-                            let result = json!({
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": analysis
-                                    }
-                                ]
-                            });
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: Some(result),
-                                error: None,
-                            }
-                        }
-                        Err(e) => {
-                            error!("Failed to analyze image '{}': {}", input.image_source, e);
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: None,
-                                error: Some(convert_mcp_error_to_jsonrpc(e)),
-                            }
+                Ok(input) => match client.analyze_image(&input).await {
+                    Ok(analysis) => {
+                        info!("Successfully analyzed image: {}", input.image_source);
+                        let result = json!({
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": analysis
+                                }
+                            ]
+                        });
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: Some(result),
+                            error: None,
                         }
                     }
-                }
+                    Err(e) => {
+                        error!("Failed to analyze image '{}': {}", input.image_source, e);
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: None,
+                            error: Some(convert_mcp_error_to_jsonrpc(e)),
+                        }
+                    }
+                },
                 Err(e) => {
                     error!("Invalid arguments for analyze_image: {}", e);
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id,
                         result: None,
-                        error: Some(convert_mcp_error_to_jsonrpc(
-                            McpError::InvalidInput(format!("Invalid arguments: {}", e))
-                        )),
+                        error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                            format!("Invalid arguments: {}", e),
+                        ))),
                     }
                 }
             }
@@ -236,9 +232,9 @@ impl JsonRpcHandler {
                 jsonrpc: "2.0".to_string(),
                 id,
                 result: None,
-                error: Some(convert_mcp_error_to_jsonrpc(
-                    McpError::InvalidInput("Missing arguments".to_string())
-                )),
+                error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                    "Missing arguments".to_string(),
+                ))),
             }
         }
     }
@@ -251,55 +247,56 @@ impl JsonRpcHandler {
                     jsonrpc: "2.0".to_string(),
                     id,
                     result: None,
-                    error: Some(convert_mcp_error_to_jsonrpc(
-                        McpError::ConfigurationError("GEMINI_API_KEY environment variable not set".to_string())
-                    )),
+                    error: Some(convert_mcp_error_to_jsonrpc(McpError::ConfigurationError(
+                        "GEMINI_API_KEY environment variable not set".to_string(),
+                    ))),
                 };
             }
         };
 
         if let Some(arguments) = tool_call.get("arguments") {
             match serde_json::from_value::<GenerateImageInput>(arguments.clone()) {
-                Ok(input) => {
-                    match client.generate_image(&input).await {
-                        Ok(file_path) => {
-                            info!("Successfully generated and saved image to: {}", file_path);
-                            let result = json!({
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": format!("Image successfully generated and saved to: {}", file_path)
-                                    }
-                                ],
-                                "file_path": file_path
-                            });
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: Some(result),
-                                error: None,
-                            }
-                        }
-                        Err(e) => {
-                            error!("Failed to generate image with prompt '{}': {}", input.user_prompt, e);
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: None,
-                                error: Some(convert_mcp_error_to_jsonrpc(e)),
-                            }
+                Ok(input) => match client.generate_image(&input).await {
+                    Ok(file_path) => {
+                        info!("Successfully generated and saved image to: {}", file_path);
+                        let result = json!({
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": format!("Image successfully generated and saved to: {}", file_path)
+                                }
+                            ],
+                            "file_path": file_path
+                        });
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: Some(result),
+                            error: None,
                         }
                     }
-                }
+                    Err(e) => {
+                        error!(
+                            "Failed to generate image with prompt '{}': {}",
+                            input.user_prompt, e
+                        );
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: None,
+                            error: Some(convert_mcp_error_to_jsonrpc(e)),
+                        }
+                    }
+                },
                 Err(e) => {
                     error!("Invalid arguments for generate_image: {}", e);
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id,
                         result: None,
-                        error: Some(convert_mcp_error_to_jsonrpc(
-                            McpError::InvalidInput(format!("Invalid arguments: {}", e))
-                        )),
+                        error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                            format!("Invalid arguments: {}", e),
+                        ))),
                     }
                 }
             }
@@ -308,9 +305,9 @@ impl JsonRpcHandler {
                 jsonrpc: "2.0".to_string(),
                 id,
                 result: None,
-                error: Some(convert_mcp_error_to_jsonrpc(
-                    McpError::InvalidInput("Missing arguments".to_string())
-                )),
+                error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                    "Missing arguments".to_string(),
+                ))),
             }
         }
     }
@@ -323,55 +320,56 @@ impl JsonRpcHandler {
                     jsonrpc: "2.0".to_string(),
                     id,
                     result: None,
-                    error: Some(convert_mcp_error_to_jsonrpc(
-                        McpError::ConfigurationError("GEMINI_API_KEY environment variable not set".to_string())
-                    )),
+                    error: Some(convert_mcp_error_to_jsonrpc(McpError::ConfigurationError(
+                        "GEMINI_API_KEY environment variable not set".to_string(),
+                    ))),
                 };
             }
         };
 
         if let Some(arguments) = tool_call.get("arguments") {
             match serde_json::from_value::<EditImageInput>(arguments.clone()) {
-                Ok(input) => {
-                    match client.edit_image(&input).await {
-                        Ok(file_path) => {
-                            info!("Successfully edited and saved image to: {}", file_path);
-                            let result = json!({
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": format!("Image successfully edited and saved to: {}", file_path)
-                                    }
-                                ],
-                                "file_path": file_path
-                            });
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: Some(result),
-                                error: None,
-                            }
-                        }
-                        Err(e) => {
-                            error!("Failed to edit image '{}' with prompt '{}': {}", input.image_source, input.user_prompt, e);
-                            JsonRpcResponse {
-                                jsonrpc: "2.0".to_string(),
-                                id,
-                                result: None,
-                                error: Some(convert_mcp_error_to_jsonrpc(e)),
-                            }
+                Ok(input) => match client.edit_image(&input).await {
+                    Ok(file_path) => {
+                        info!("Successfully edited and saved image to: {}", file_path);
+                        let result = json!({
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": format!("Image successfully edited and saved to: {}", file_path)
+                                }
+                            ],
+                            "file_path": file_path
+                        });
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: Some(result),
+                            error: None,
                         }
                     }
-                }
+                    Err(e) => {
+                        error!(
+                            "Failed to edit image '{}' with prompt '{}': {}",
+                            input.image_source, input.user_prompt, e
+                        );
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id,
+                            result: None,
+                            error: Some(convert_mcp_error_to_jsonrpc(e)),
+                        }
+                    }
+                },
                 Err(e) => {
                     error!("Invalid arguments for edit_image: {}", e);
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id,
                         result: None,
-                        error: Some(convert_mcp_error_to_jsonrpc(
-                            McpError::InvalidInput(format!("Invalid arguments: {}", e))
-                        )),
+                        error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                            format!("Invalid arguments: {}", e),
+                        ))),
                     }
                 }
             }
@@ -380,9 +378,9 @@ impl JsonRpcHandler {
                 jsonrpc: "2.0".to_string(),
                 id,
                 result: None,
-                error: Some(convert_mcp_error_to_jsonrpc(
-                    McpError::InvalidInput("Missing arguments".to_string())
-                )),
+                error: Some(convert_mcp_error_to_jsonrpc(McpError::InvalidInput(
+                    "Missing arguments".to_string(),
+                ))),
             }
         }
     }
@@ -443,13 +441,13 @@ mod tests {
             method: "initialize".to_string(),
             params: None,
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.error.is_none());
         assert!(response.result.is_some());
-        
+
         let result = response.result.unwrap();
         assert_eq!(result["protocolVersion"], "2024-11-05");
         assert_eq!(result["serverInfo"]["name"], "gemini-image-mcp");
@@ -465,30 +463,45 @@ mod tests {
             method: "tools/list".to_string(),
             params: None,
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.error.is_none());
         assert!(response.result.is_some());
-        
+
         let result = response.result.unwrap();
         let tools = result["tools"].as_array().unwrap();
         assert_eq!(tools.len(), 3);
-        
+
         assert_eq!(tools[0]["name"], "analyze_image");
-        assert!(tools[0]["description"].as_str().unwrap().contains("Gemini API"));
+        assert!(
+            tools[0]["description"]
+                .as_str()
+                .unwrap()
+                .contains("Gemini API")
+        );
         assert!(tools[0]["inputSchema"]["properties"]["image_source"].is_object());
         assert!(tools[0]["inputSchema"]["properties"]["system_prompt"].is_object());
         assert!(tools[0]["inputSchema"]["properties"]["user_prompt"].is_object());
-        
+
         assert_eq!(tools[1]["name"], "generate_image");
-        assert!(tools[1]["description"].as_str().unwrap().contains("Generate an image"));
+        assert!(
+            tools[1]["description"]
+                .as_str()
+                .unwrap()
+                .contains("Generate an image")
+        );
         assert!(tools[1]["inputSchema"]["properties"]["user_prompt"].is_object());
         assert!(tools[1]["inputSchema"]["properties"]["system_prompt"].is_object());
 
         assert_eq!(tools[2]["name"], "edit_image");
-        assert!(tools[2]["description"].as_str().unwrap().contains("Edit an existing image"));
+        assert!(
+            tools[2]["description"]
+                .as_str()
+                .unwrap()
+                .contains("Edit an existing image")
+        );
         assert!(tools[2]["inputSchema"]["properties"]["image_source"].is_object());
         assert!(tools[2]["inputSchema"]["properties"]["system_prompt"].is_object());
         assert!(tools[2]["inputSchema"]["properties"]["user_prompt"].is_object());
@@ -504,13 +517,13 @@ mod tests {
             method: "unknown/method".to_string(),
             params: None,
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert_eq!(error.code, -32601);
         assert_eq!(error.message, "Method not found");
@@ -531,13 +544,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert_eq!(error.code, -32001);
         assert!(error.message.contains("Configuration error"));
@@ -558,13 +571,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert!(error.code == -32001 || error.code == -32602); // Either config error or invalid params
     }
@@ -584,13 +597,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         // Should be either config error (no API key) or validation error for path
         assert!(error.code == -32001 || error.code == -32602);
@@ -602,7 +615,7 @@ mod tests {
         let jsonrpc_error = convert_mcp_error_to_jsonrpc(error);
         assert_eq!(jsonrpc_error.code, -32602);
         assert!(jsonrpc_error.message.contains("Invalid params"));
-        
+
         let error = McpError::AuthenticationError("auth failed".to_string());
         let jsonrpc_error = convert_mcp_error_to_jsonrpc(error);
         assert_eq!(jsonrpc_error.code, -32001);
@@ -611,17 +624,13 @@ mod tests {
 
     #[test]
     fn test_json_rpc_response_error_constructor() {
-        let response = JsonRpcResponse::error(
-            Some(json!(1)),
-            -32700,
-            "Parse error".to_string()
-        );
-        
+        let response = JsonRpcResponse::error(Some(json!(1)), -32700, "Parse error".to_string());
+
         assert_eq!(response.jsonrpc, "2.0");
         assert_eq!(response.id, Some(json!(1)));
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert_eq!(error.code, -32700);
         assert_eq!(error.message, "Parse error");
@@ -643,13 +652,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert_eq!(error.code, -32001);
         assert!(error.message.contains("Configuration error"));
@@ -670,13 +679,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert!(error.code == -32001 || error.code == -32602); // Either config error or invalid params
     }
@@ -697,13 +706,13 @@ mod tests {
                 }
             })),
         };
-        
+
         let response = handler.handle_request(request).await;
-        
+
         assert_eq!(response.jsonrpc, "2.0");
         assert!(response.result.is_none());
         assert!(response.error.is_some());
-        
+
         let error = response.error.unwrap();
         assert_eq!(error.code, -1);
         assert!(error.message.contains("Unknown tool"));
