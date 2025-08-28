@@ -110,7 +110,9 @@ jobs:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         if [ "$CURRENT_VERSION" != "${{ github.event.inputs.version }}" ]; then
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
-          git add package.json
+          # Update Cargo.toml version as well
+          sed -i 's/^version = ".*"/version = "${{ github.event.inputs.version }}"/' Cargo.toml
+          git add package.json Cargo.toml
           git commit -m "Bump version to ${{ github.event.inputs.version }}"
           git push
         else
@@ -126,7 +128,9 @@ jobs:
         CURRENT_VERSION=$(node -p "require('./package.json').version")
         if [ "$CURRENT_VERSION" != "$VERSION" ]; then
           npm version $VERSION --no-git-tag-version
-          git add package.json
+          # Update Cargo.toml version as well
+          sed -i 's/^version = ".*"/version = "'$VERSION'"/' Cargo.toml
+          git add package.json Cargo.toml
           git commit -m "Bump version to $VERSION"
           git push
         else
