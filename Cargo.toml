@@ -8,6 +8,9 @@ homepage = "https://github.com/ikamman/gemini-image-mcp#readme"
 license = "MIT"
 authors = ["Kamil Manka <kamil.manka@gmail.com>"]
 
+[package.metadata.dist]
+npm-package = "@ikamman/gemini-image-mcp"
+
 [dependencies]
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk.git", features = [
     "server",
