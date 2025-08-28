@@ -8,7 +8,7 @@ function getPlatform() {
   const platform = process.platform;
   const arch = process.arch;
   
-  if (platform === 'darwin' && arch === 'x64') {
+  if (platform === 'darwin' && (arch === 'x64' || arch === 'arm64')) {
     return { platform: 'x86_64-apple-darwin', ext: '' };
   }
   if (platform === 'linux' && arch === 'x64') {
