@@ -2,7 +2,6 @@ use crate::error::{McpError, McpResult};
 use crate::image_service::ImageService;
 use crate::validation::{ImageSourceValidator, OutputPathValidator, PromptValidator, Validator};
 use base64::{Engine as _, engine::general_purpose};
-use reqwest;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
@@ -495,11 +494,10 @@ impl GeminiClient {
             }
 
             for part in &candidate.content.parts {
-                if let GeminiPart::Text { text } = part {
-                    if !text.trim().is_empty() {
+                if let GeminiPart::Text { text } = part
+                    && !text.trim().is_empty() {
                         return Ok(text.clone());
                     }
-                }
             }
 
             Err(McpError::GeminiApiError {
@@ -526,8 +524,8 @@ impl GeminiClient {
             }
 
             let candidate = &candidates[0];
-            if let Some(content) = candidate.get("content") {
-                if let Some(parts) = content.get("parts").and_then(|p| p.as_array()) {
+            if let Some(content) = candidate.get("content")
+                && let Some(parts) = content.get("parts").and_then(|p| p.as_array()) {
                     if parts.is_empty() {
                         return Err(McpError::GeminiApiError {
                             code: 0,
@@ -535,16 +533,13 @@ impl GeminiClient {
                         });
                     }
 
-                    for part in parts {
-                        // Try both camelCase and snake_case since API might use either
-                        if let Some(inline_data) =
-                            part.get("inline_data").or_else(|| part.get("inlineData"))
-                        {
-                            if let Some(data) = inline_data.get("data").and_then(|d| d.as_str()) {
-                                return Ok(data.to_string());
-                            }
+                for part in parts {
+                    // Try both camelCase and snake_case since API might use either
+                    if let Some(inline_data) =
+                        part.get("inline_data").or_else(|| part.get("inlineData"))
+                        && let Some(data) = inline_data.get("data").and_then(|d| d.as_str()) {
+                            return Ok(data.to_string());
                         }
-                    }
                 }
             }
         }

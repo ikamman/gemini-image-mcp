@@ -1,7 +1,6 @@
 use crate::error::{McpError, McpResult};
 use crate::validation::{ImageSourceValidator, Validator, get_mime_type_from_extension};
 use base64::{Engine as _, engine::general_purpose};
-use reqwest;
 use std::path::Path;
 use tokio::fs;
 use tracing::warn;
@@ -57,9 +56,9 @@ impl ImageService {
         let response = self.client.get(url).send().await?;
 
         if !response.status().is_success() {
-            return Err(McpError::NetworkError(reqwest::Error::from(
+            return Err(McpError::NetworkError(
                 response.error_for_status().unwrap_err(),
-            )));
+            ));
         }
 
         let content_length = response.content_length().unwrap_or(0);
@@ -112,9 +111,9 @@ impl ImageService {
         let response = self.client.head(url).send().await?;
 
         if !response.status().is_success() {
-            return Err(McpError::NetworkError(reqwest::Error::from(
+            return Err(McpError::NetworkError(
                 response.error_for_status().unwrap_err(),
-            )));
+            ));
         }
 
         if let Some(content_type) = response.headers().get("content-type") {
