@@ -1,6 +1,6 @@
 [package]
 name = "gemini-image-mcp"
-version = "1.0.7"
+version = "1.0.8"
 edition = "2024"
 repository = "https://github.com/ikamman/gemini-image-mcp.git"
 description = "MCP server for image analysis and generation using Google's Gemini API"
