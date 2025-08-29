@@ -85,7 +85,7 @@ impl JsonRpcHandler {
             },
             "serverInfo": {
                 "name": "gemini-image-mcp",
-                "version": "1.0.0"
+                "version": "1.1.0"
             }
         });
         JsonRpcResponse {
@@ -479,7 +479,7 @@ mod tests {
         let result = response.result.unwrap();
         assert_eq!(result["protocolVersion"], "2024-11-05");
         assert_eq!(result["serverInfo"]["name"], "gemini-image-mcp");
-        assert_eq!(result["serverInfo"]["version"], "1.0.0");
+        assert_eq!(result["serverInfo"]["version"], "1.1.0");
     }
 
     #[tokio::test]
