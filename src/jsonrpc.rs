@@ -1,5 +1,8 @@
 use crate::error::McpError;
-use crate::gemini_client::{AnalyzeImageInput, EditImageInput, GeminiClient, GenerateImageInput, InpaintImageInput, StyleTransferInput, ComposeImagesInput, RefineImageInput};
+use crate::gemini_client::{
+    AnalyzeImageInput, ComposeImagesInput, EditImageInput, GeminiClient, GenerateImageInput,
+    InpaintImageInput, RefineImageInput, StyleTransferInput,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tracing::{error, info};
@@ -1057,9 +1060,14 @@ mod tests {
     #[tokio::test]
     async fn test_new_tools_missing_arguments() {
         let handler = JsonRpcHandler::new(None);
-        
-        let tool_names = ["inpaint_image", "style_transfer", "compose_images", "refine_image"];
-        
+
+        let tool_names = [
+            "inpaint_image",
+            "style_transfer",
+            "compose_images",
+            "refine_image",
+        ];
+
         for tool_name in tool_names {
             let request = JsonRpcRequest {
                 jsonrpc: "2.0".to_string(),
@@ -1087,7 +1095,7 @@ mod tests {
     #[tokio::test]
     async fn test_new_tools_invalid_image_paths() {
         let handler = JsonRpcHandler::new(Some("test-api-key".to_string()));
-        
+
         // Test inpaint_image with invalid image path
         let request = JsonRpcRequest {
             jsonrpc: "2.0".to_string(),
@@ -1113,13 +1121,16 @@ mod tests {
         // Since we have an API key but invalid input, this should be a validation error
         // The actual error will depend on which validation fails first
         assert!(error.code == -32602 || error.code == -32004); // Invalid params or file system error
-        assert!(error.message.contains("Invalid arguments") || error.message.contains("Unsupported file extension"));
+        assert!(
+            error.message.contains("Invalid arguments")
+                || error.message.contains("Unsupported file extension")
+        );
     }
 
     #[tokio::test]
     async fn test_style_transfer_invalid_output_path() {
         let handler = JsonRpcHandler::new(Some("test-api-key".to_string()));
-        
+
         let request = JsonRpcRequest {
             jsonrpc: "2.0".to_string(),
             id: Some(serde_json::Value::Number(serde_json::Number::from(1))),
@@ -1241,7 +1252,10 @@ impl JsonRpcHandler {
             match serde_json::from_value::<StyleTransferInput>(arguments.clone()) {
                 Ok(input) => match client.style_transfer(&input).await {
                     Ok(file_path) => {
-                        info!("Successfully applied style transfer and saved image to: {}", file_path);
+                        info!(
+                            "Successfully applied style transfer and saved image to: {}",
+                            file_path
+                        );
                         let result = json!({
                             "content": [
                                 {
@@ -1334,7 +1348,9 @@ impl JsonRpcHandler {
                     Err(e) => {
                         error!(
                             "Failed to compose images with primary '{}' and {} secondary images: {}",
-                            input.primary_image, input.secondary_images.len(), e
+                            input.primary_image,
+                            input.secondary_images.len(),
+                            e
                         );
                         JsonRpcResponse {
                             jsonrpc: "2.0".to_string(),

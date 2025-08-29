@@ -564,7 +564,10 @@ impl GeminiClient {
 
         // Construct user prompt with mask description if provided
         let full_prompt = if let Some(ref mask_desc) = input.mask_description {
-            format!("Focus on the region containing '{}'. {}", mask_desc, input.user_prompt)
+            format!(
+                "Focus on the region containing '{}'. {}",
+                mask_desc, input.user_prompt
+            )
         } else {
             input.user_prompt.clone()
         };
@@ -583,7 +586,8 @@ impl GeminiClient {
             contents: vec![GeminiContent { parts }],
         };
 
-        self.generate_image_from_request(request, &input.output_path).await
+        self.generate_image_from_request(request, &input.output_path)
+            .await
     }
 
     pub async fn style_transfer(&self, input: &StyleTransferInput) -> McpResult<String> {
@@ -645,7 +649,9 @@ impl GeminiClient {
         });
 
         // Add user prompt or default
-        let prompt = input.user_prompt.as_deref()
+        let prompt = input
+            .user_prompt
+            .as_deref()
             .unwrap_or("Apply the style of the second image to the first image");
         parts.push(GeminiPart::Text {
             text: prompt.to_string(),
@@ -655,7 +661,8 @@ impl GeminiClient {
             contents: vec![GeminiContent { parts }],
         };
 
-        self.generate_image_from_request(request, &input.output_path).await
+        self.generate_image_from_request(request, &input.output_path)
+            .await
     }
 
     pub async fn compose_images(&self, input: &ComposeImagesInput) -> McpResult<String> {
@@ -730,7 +737,8 @@ impl GeminiClient {
             contents: vec![GeminiContent { parts }],
         };
 
-        self.generate_image_from_request(request, &input.output_path).await
+        self.generate_image_from_request(request, &input.output_path)
+            .await
     }
 
     pub async fn refine_image(&self, input: &RefineImageInput) -> McpResult<String> {
@@ -789,10 +797,15 @@ impl GeminiClient {
             contents: vec![GeminiContent { parts }],
         };
 
-        self.generate_image_from_request(request, &input.output_path).await
+        self.generate_image_from_request(request, &input.output_path)
+            .await
     }
 
-    async fn generate_image_from_request(&self, request: GeminiRequest, output_path: &str) -> McpResult<String> {
+    async fn generate_image_from_request(
+        &self,
+        request: GeminiRequest,
+        output_path: &str,
+    ) -> McpResult<String> {
         let url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent";
 
         let response = self
@@ -862,12 +875,10 @@ impl GeminiClient {
             })?;
 
         // Save the image to the specified path
-        fs::write(output_path, &image_bytes)
-            .await
-            .map_err(|e| {
-                error!("Failed to write image to '{}': {}", output_path, e);
-                McpError::FileSystemError(format!("Failed to write image file: {}", e))
-            })?;
+        fs::write(output_path, &image_bytes).await.map_err(|e| {
+            error!("Failed to write image to '{}': {}", output_path, e);
+            McpError::FileSystemError(format!("Failed to write image file: {}", e))
+        })?;
 
         Ok(output_path.to_string())
     }
@@ -998,7 +1009,10 @@ mod tests {
         let deserialized: StyleTransferInput = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.source_image, "./test/source.jpg");
         assert_eq!(deserialized.style_image, "./test/style.jpg");
-        assert_eq!(deserialized.user_prompt, Some("Transfer artistic style".to_string()));
+        assert_eq!(
+            deserialized.user_prompt,
+            Some("Transfer artistic style".to_string())
+        );
     }
 
     #[test]
